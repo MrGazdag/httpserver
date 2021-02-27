@@ -1,0 +1,197 @@
+package me.mrgazdag.programs.httpserver;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.HashSet;
+import java.util.function.Predicate;
+
+import me.mrgazdag.programs.httpserver.handler.FileHandler;
+import me.mrgazdag.programs.httpserver.handler.HTTPHandler;
+import me.mrgazdag.programs.httpserver.manager.HTTPManager;
+import me.mrgazdag.programs.httpserver.request.HTTPRequest;
+import me.mrgazdag.programs.httpserver.request.HTTPRequestHeader;
+import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
+import me.mrgazdag.programs.httpserver.request.HTTPRequest.HTTPRequestBuilder;
+import me.mrgazdag.programs.httpserver.response.HTTPResponse;
+
+public class HTTPServer {
+	private ServerSocket socket;
+	private volatile boolean running;
+	private HashSet<HTTPResourceEntry> handlers;
+	private int counted;
+	private volatile HTTPManager manager;
+	private int port;
+	@SuppressWarnings("unused")
+	private int count() {
+		return counted++;
+	}
+	public HTTPServer(int port) {
+		this(null, port);
+	}
+	public HTTPServer(HTTPManager manager, int port) {
+		this.running = false;
+		this.handlers = new HashSet<HTTPResourceEntry>();
+		this.manager = manager == null ? new HTTPManager(this) : manager.setServer(this);
+		this.port = port;
+	}
+	public HTTPManager getManager() {
+		return manager;
+	}
+	public void setManager(HTTPManager manager) {
+		this.manager = manager;
+	}
+	public void start() {
+		running = true;
+		try {
+			//TODO convert to sun
+			//sun = HttpServer.create(new InetSocketAddress(port), 0);
+			socket = new ServerSocket(port);
+			counted = 0;
+			new Thread(() -> {
+				while (running) {
+					try {
+						//File folder = new File("D:\\Tworkspaces\\Programs\\!DISCORD - DiscordBeniSzarMusicBot\\target\\instance\\editor");
+						Socket s = socket.accept();
+						s.setTcpNoDelay(true);
+						s.setSoTimeout(5000);
+						new Thread(() -> {
+							try {
+								InputStream inStream = s.getInputStream();
+								OutputStream outStream = s.getOutputStream();
+								BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+								BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
+								HTTPResponse response = manager.handle(s, in, out, inStream, outStream);
+								response.send(out, outStream);
+							} catch (IOException e) {
+								e.printStackTrace();
+							} finally {
+								try {
+									s.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+							/*
+							PrintStream ps = null;
+							try {
+								File f = new File(folder, count()+".txt");
+								if (!f.exists()) f.createNewFile();
+								ps = new PrintStream(f);
+								handle(s, ps);
+							} catch (Throwable e) {
+								if (ps != null) e.printStackTrace(ps);
+								else e.printStackTrace();
+							} finally {
+								if (ps != null) {
+									ps.close();
+								}
+							}
+							*/
+						}).start();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					
+				}
+			}, "API Server Thread").start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public HTTPResourceEntry addEntry(Predicate<HTTPRequest> filter, HTTPHandler handler) {
+		HTTPResourceEntry entry = new HTTPResourceEntry(filter, handler);
+		handlers.add(entry);
+		return entry;
+	}
+	public boolean removeEntry(HTTPResourceEntry entry) {
+		return handlers.remove(entry);
+	}
+	@SuppressWarnings("unused")
+	private void handle(Socket s, PrintStream ps) throws Exception {
+		ps.println("Connection from " + s.getInetAddress().getHostAddress() + ":" + s.getPort());
+		InputStream is = s.getInputStream();
+		BufferedReader in = new BufferedReader(new InputStreamReader(is));
+		//StringBuilder sb = new StringBuilder();
+		HTTPRequestBuilder rb = new HTTPRequestBuilder();
+		String firstLine = in.readLine();
+		if (firstLine == null) {
+			s.close();
+			return;
+		}
+		String[] firstLineParts = firstLine.split(" ");
+		String methodString = firstLineParts[0];
+		ps.println("Method: \"" + methodString + "\"");
+		String path = firstLineParts[1];
+		ps.println("Path: \"" + path + "\"");
+		String versionString = firstLine.substring(methodString.length() + 1 + path.length() + 1);
+		ps.println("Version: \"" + versionString + "\"");
+		rb.method(HTTPRequestMethod.of(methodString));
+		rb.resource(path);
+		rb.version(HTTPVersion.of(versionString));
+		while (in.ready()) {
+			String line = in.readLine();
+			if (line.equals("")) break;
+			ps.println(String.valueOf(line));
+			String[] parts = line.split(": ", 2);
+			rb.header(parts[0], parts[1]);
+		}
+		if (rb.hasHeader(HTTPRequestHeader.CONTENT_LENGTH)) {
+			ByteCache cache = new ByteCache();
+			//SET MAX FILE SIZE !!!! TODO
+			//without it, it is possible to overload the server
+			//with large uploads
+			while (in.ready()) {
+				String line = in.readLine();
+				if (line.equals("")) break;
+				ps.println(String.valueOf(line));
+				cache.write(line.getBytes());
+				String[] parts = line.split(": ", 2);
+				rb.header(parts[0], parts[1]);
+			}
+		}
+		HTTPRequest request = rb.build();
+		for (HTTPResourceEntry entry : handlers) {
+			if (entry.getFilter().test(request)) {
+				ps.println("filtered");
+				HTTPResponse response = entry.getHandler().handle(request);
+				response.send(new Socket() {
+					@Override
+					public OutputStream getOutputStream() throws IOException {
+						return new OutputStream() {
+							
+							@Override
+							public void write(int b) throws IOException {
+								ps.write(b);
+							}
+						};
+					}
+				});
+				response.send(s);
+				s.close();
+				return;
+			}
+		}
+		ps.println("Not found");
+		s.close();
+	}
+	public HashSet<HTTPResourceEntry> getHandlers() {
+		return handlers;
+	}
+	public static void main(String[] args) {
+		HTTPServer server = new HTTPServer(25565);
+		server.addEntry((request) -> {
+			return request.getRequestedResource().equals("/editor");
+		}, new FileHandler(new File("D:\\Tworkspaces\\Programs\\!DISCORD - DiscordBeniSzarMusicBot\\target\\instance\\editor\\editor.html")));
+		server.start();
+	}
+	
+}
