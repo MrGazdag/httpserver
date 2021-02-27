@@ -7,13 +7,14 @@ import java.util.Map;
 import me.mrgazdag.programs.httpserver.ByteCache;
 import me.mrgazdag.programs.httpserver.HTTPVersion;
 
+@SuppressWarnings("unused")
 public class HTTPRequest {
-	private HTTPRequestMethod method;
-	private String resource;
-	private HTTPVersion version;
-	private Map<String, String> headers;
-	private ParameterMap parameters;
-	private ByteCache data;
+	private final HTTPRequestMethod method;
+	private final String resource;
+	private final HTTPVersion version;
+	private final Map<String, String> headers;
+	private final ParameterMap parameters;
+	private final ByteCache data;
 	
 	HTTPRequest(HTTPRequestMethod method, String resource, HTTPVersion version, HashMap<String, String> headers, ParameterMap parameters, ByteCache data) {
 		this.method = method;
@@ -55,18 +56,19 @@ public class HTTPRequest {
 	}
 
 
+	@SuppressWarnings("UnusedReturnValue")
 	public static class HTTPRequestBuilder {
 		private HTTPRequestMethod method;
 		private String resource;
 		private HTTPVersion version;
-		private HashMap<String,String> headers;
-		private ParameterMap parameters;
+		private final HashMap<String,String> headers;
+		private final ParameterMap parameters;
 		private ByteCache data;
 		public HTTPRequestBuilder() {
 			method = HTTPRequestMethod.UNKNOWN;
 			resource = "/";
 			version = HTTPVersion.UNKNOWN;
-			headers = new HashMap<String,String>();
+			headers = new HashMap<>();
 			parameters = new ParameterMap();
 		}
 		public HTTPRequestBuilder method(HTTPRequestMethod method) {

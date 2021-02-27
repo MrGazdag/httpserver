@@ -1,6 +1,5 @@
 package me.mrgazdag.programs.httpserver.handler;
 
-import me.mrgazdag.programs.httpserver.BadRequestException;
 import me.mrgazdag.programs.httpserver.HTTPVersion;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest;
 import me.mrgazdag.programs.httpserver.resource.FileResource;
@@ -10,11 +9,12 @@ import me.mrgazdag.programs.httpserver.response.HTTPStatusCode;
 
 import java.io.File;
 
+@SuppressWarnings("unused")
 public class FileHandler implements HTTPHandler {
 	
-	private HTTPResource resource;
-	private File f;
-	private HTTPResource notFound;
+	private final HTTPResource resource;
+	private final File f;
+	private final HTTPResource notFound;
 	public FileHandler(File f) {
 		this(f,null);
 	}
@@ -23,6 +23,7 @@ public class FileHandler implements HTTPHandler {
 		this.resource = FileResource.create(f);
 		this.notFound = notFound;
 	}
+	@SuppressWarnings("unused")
 	public FileHandler(FileResource resource) {
 		this(resource, null);
 	}
@@ -33,7 +34,7 @@ public class FileHandler implements HTTPHandler {
 	}
 
 	@Override
-	public HTTPResponse handle(HTTPRequest request) throws BadRequestException {
+	public HTTPResponse handle(HTTPRequest request) {
 		if (!f.exists()) {
 			return new HTTPResponse(HTTPStatusCode.HTTP_404_NOT_FOUND, HTTPVersion.VERSION_1_1).resource(notFound);
 		} else {

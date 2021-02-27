@@ -53,14 +53,14 @@ public enum MIMEType {
 	MULTIPART_BYTERANGES("multipart", "byteranges"),
 	
 	;
-	private String type;
-	private String subtype;
-	private String parameter;
-	private String full;
-	private MIMEType(String type, String subtype) {
+	private final String type;
+	private final String subtype;
+	private final String parameter;
+	private final String full;
+	MIMEType(String type, String subtype) {
 		this(type,subtype,null);
 	}
-	private MIMEType(String type, String subtype, String parameter) {
+	MIMEType(String type, String subtype, String parameter) {
 		this.type = type;
 		this.subtype = subtype;
 		this.parameter = parameter;

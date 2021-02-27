@@ -12,14 +12,15 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 
+@SuppressWarnings("unused")
 public class HTTPResponse {
 	
 	private HTTPStatusCode code;
 	private HTTPVersion version;
-	private HashMap<String, String> headers;
+	private final HashMap<String, String> headers;
 	private HTTPResource resource;
 	public HTTPResponse() {
-		headers = new HashMap<String,String>();
+		headers = new HashMap<>();
 		code = HTTPStatusCode.HTTP_501_NOT_IMPLEMENTED;
 	}
 	public HTTPResponse(HTTPStatusCode code, HTTPVersion version) {
@@ -39,6 +40,7 @@ public class HTTPResponse {
 		this.headers.put(key, value);
 		return this;
 	}
+	@SuppressWarnings("UnusedReturnValue")
 	public HTTPResponse header(HTTPResponseHeader key, String value) {
 		this.headers.put(key.getKey(), value);
 		return this;

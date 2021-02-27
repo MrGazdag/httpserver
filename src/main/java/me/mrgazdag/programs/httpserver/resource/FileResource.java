@@ -13,10 +13,11 @@ import me.mrgazdag.programs.httpserver.ByteCache;
  * @author Andris
  *
  */
+@SuppressWarnings("unused")
 public class FileResource extends CachedResource {
 
-	private File f;
-	private FileType type;
+	private final File f;
+	private final FileType type;
 	/*
 	private FileResource(File f) {
 		this(f,StandardCharsets.UTF_8, getFileType(f));
@@ -25,6 +26,7 @@ public class FileResource extends CachedResource {
 		this(f, StandardCharsets.UTF_8, getFileType(f), cacheEnabled);
 	}
 	*/
+	@SuppressWarnings("CommentedOutCode")
 	private FileResource(File f, FileType type) {
 		super(true);
 		this.f = f;
@@ -59,7 +61,7 @@ public class FileResource extends CachedResource {
 		}
 		fis.close();
 	}
-	public static enum FileType {
+	public enum FileType {
 		GENERIC(MIMEType.APPLICATION_OCTET_STREAM, false),
 		HTML(MIMEType.TEXT_HTML, true, "html", "htm", "shtml", "shtm", "xhtml", "xht", "hta"),
 		CSS(MIMEType.TEXT_CSS, true, "css"),
@@ -70,18 +72,16 @@ public class FileResource extends CachedResource {
 		RAR(MIMEType.APPLICATION_X_RAR_COMPRESSED, false, "rar"),
 		PDF(MIMEType.APPLICATION_PDF, false, "pdf"),
 		;
-		private String mime;
-		private boolean text;
-		private String[] extensions;
-		private FileType(String mime, boolean text, String...extensions) {
+		private final String mime;
+		private final boolean text;
+		private final String[] extensions;
+		FileType(String mime, boolean text, String... extensions) {
 			this.mime = mime;
 			this.text = text;
 			this.extensions = extensions;
 		}
-		private FileType(MIMEType mime, boolean text, String...extensions) {
-			this.mime = mime.getFullString();
-			this.text = text;
-			this.extensions = extensions;
+		FileType(MIMEType mime, boolean text, String... extensions) {
+			this(mime.getFullString(), text, extensions);
 		}
 	}
 	public static FileType getFileType(File f) {

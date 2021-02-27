@@ -2,7 +2,6 @@ package me.mrgazdag.programs.httpserver;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,7 +13,6 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.function.Predicate;
 
-import me.mrgazdag.programs.httpserver.handler.FileHandler;
 import me.mrgazdag.programs.httpserver.handler.HTTPHandler;
 import me.mrgazdag.programs.httpserver.manager.HTTPManager;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest;
@@ -23,13 +21,14 @@ import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest.HTTPRequestBuilder;
 import me.mrgazdag.programs.httpserver.response.HTTPResponse;
 
+@SuppressWarnings("unused")
 public class HTTPServer {
 	private ServerSocket socket;
 	private volatile boolean running;
-	private HashSet<HTTPResourceEntry> handlers;
+	private final HashSet<HTTPResourceEntry> handlers;
 	private int counted;
 	private volatile HTTPManager manager;
-	private int port;
+	private final int port;
 	@SuppressWarnings("unused")
 	private int count() {
 		return counted++;
@@ -39,7 +38,7 @@ public class HTTPServer {
 	}
 	public HTTPServer(HTTPManager manager, int port) {
 		this.running = false;
-		this.handlers = new HashSet<HTTPResourceEntry>();
+		this.handlers = new HashSet<>();
 		this.manager = manager == null ? new HTTPManager(this) : manager.setServer(this);
 		this.port = port;
 	}
@@ -63,6 +62,7 @@ public class HTTPServer {
 						Socket s = socket.accept();
 						s.setTcpNoDelay(true);
 						s.setSoTimeout(5000);
+						//noinspection CommentedOutCode
 						new Thread(() -> {
 							try {
 								InputStream inStream = s.getInputStream();
@@ -107,6 +107,7 @@ public class HTTPServer {
 			e.printStackTrace();
 		}
 	}
+	@SuppressWarnings("UnusedReturnValue")
 	public HTTPResourceEntry addEntry(Predicate<HTTPRequest> filter, HTTPHandler handler) {
 		HTTPResourceEntry entry = new HTTPResourceEntry(filter, handler);
 		handlers.add(entry);
@@ -140,7 +141,7 @@ public class HTTPServer {
 		while (in.ready()) {
 			String line = in.readLine();
 			if (line.equals("")) break;
-			ps.println(String.valueOf(line));
+			ps.println(line);
 			String[] parts = line.split(": ", 2);
 			rb.header(parts[0], parts[1]);
 		}
@@ -152,7 +153,7 @@ public class HTTPServer {
 			while (in.ready()) {
 				String line = in.readLine();
 				if (line.equals("")) break;
-				ps.println(String.valueOf(line));
+				ps.println(line);
 				cache.write(line.getBytes());
 				String[] parts = line.split(": ", 2);
 				rb.header(parts[0], parts[1]);
@@ -165,11 +166,11 @@ public class HTTPServer {
 				HTTPResponse response = entry.getHandler().handle(request);
 				response.send(new Socket() {
 					@Override
-					public OutputStream getOutputStream() throws IOException {
+					public OutputStream getOutputStream() {
 						return new OutputStream() {
 							
 							@Override
-							public void write(int b) throws IOException {
+							public void write(int b) {
 								ps.write(b);
 							}
 						};
@@ -185,13 +186,6 @@ public class HTTPServer {
 	}
 	public HashSet<HTTPResourceEntry> getHandlers() {
 		return handlers;
-	}
-	public static void main(String[] args) {
-		HTTPServer server = new HTTPServer(25565);
-		server.addEntry((request) -> {
-			return request.getRequestedResource().equals("/editor");
-		}, new FileHandler(new File("D:\\Tworkspaces\\Programs\\!DISCORD - DiscordBeniSzarMusicBot\\target\\instance\\editor\\editor.html")));
-		server.start();
 	}
 	
 }

@@ -51,8 +51,8 @@ public enum HTTPResponseHeader {
 	X_FRAME_OPTIONS("X-Frame-Options")
 	;
 	
-	private String key;
-	private HTTPResponseHeader(String key) {
+	private final String key;
+	HTTPResponseHeader(String key) {
 		this.key = key;
 	}
 	public String getKey() {

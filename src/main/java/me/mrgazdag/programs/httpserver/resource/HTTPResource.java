@@ -29,7 +29,7 @@ public interface HTTPResource {
 	/**
 	 * Implementations should return the length of the resource
 	 * in the way applicable (bytes, characters)
-	 * @return
+	 * @return the content length
 	 */
 	public long length();
 }

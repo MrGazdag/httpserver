@@ -4,31 +4,33 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ByteCache {
-	private int chunkSize;
-	private volatile List<byte[]> bytes;
+	private final int chunkSize;
+	private final List<byte[]> bytes;
 	private volatile byte[] lastChunk;
-	private volatile int nextIndex;
+	private final AtomicInteger nextIndex = new AtomicInteger(0);
 	private OutputStream outputStream;
 	
 	public ByteCache() {
-		this.bytes = new ArrayList<byte[]>();
+		this.bytes = new ArrayList<>();
 		this.chunkSize = 2048;
 		incrementList();
 	}
+	@SuppressWarnings("unused")
 	public ByteCache(int chunkSize) {
-		this.bytes = new ArrayList<byte[]>();
+		this.bytes = new ArrayList<>();
 		this.chunkSize = chunkSize;
 		incrementList();
 	}
 	private void check() {
-		if (nextIndex == chunkSize) {
+		if (nextIndex.get() == chunkSize) {
 			incrementList();
 		}
 	}
 	public ByteCache clear() {
-		nextIndex = chunkSize;
+		nextIndex.set(chunkSize);
 		incrementList();
 		this.bytes.clear();
 		return this;
@@ -36,34 +38,35 @@ public class ByteCache {
 	private void incrementList() {
 		if (lastChunk != null) bytes.add(lastChunk);
 		lastChunk = new byte[chunkSize];
-		nextIndex = 0;
+		nextIndex.set(0);
 	}
 	public void copyTo(OutputStream stream) throws IOException {
 		for (byte[] bs : bytes) {
 			stream.write(bs);
 		}
-		stream.write(lastChunk, 0, nextIndex);
+		stream.write(lastChunk, 0, nextIndex.get());
 	}
 	public void write(byte b) {
-		lastChunk[nextIndex] = b;
-		nextIndex++;
+		lastChunk[nextIndex.get()] = b;
+		nextIndex.incrementAndGet();
 		check();
 	}
 	public void write(byte[] b) {
 		write(b,0,b.length);
 	}
+	@SuppressWarnings("CommentedOutCode")
 	public void write(byte[] b, int off, int len) {
-		int remaining = chunkSize-nextIndex;
-		int olen = len;
+		int remaining;
+		int olen;
 		int read = 0;
-		int capacity = 0;
+		int capacity;
 		do {
 			olen = len;
-			capacity = chunkSize-nextIndex;
+			capacity = chunkSize-nextIndex.get();
 			remaining = Math.min(len, capacity);
-			System.arraycopy(b, off+read, lastChunk, nextIndex, remaining);
+			System.arraycopy(b, off+read, lastChunk, nextIndex.get(), remaining);
 			if (remaining == capacity) incrementList();
-			else nextIndex +=remaining;
+			else nextIndex.addAndGet(remaining);
 			read+=remaining;
 			len-=remaining;
 		} while (olen > remaining);
@@ -78,15 +81,15 @@ public class ByteCache {
 		if (outputStream == null) {
 			outputStream = new OutputStream() {
 				@Override
-				public void write(int b) throws IOException {
+				public void write(int b) {
 					ByteCache.this.write((byte) b);
 				}
 				@Override
-				public void write(byte[] b) throws IOException {
+				public void write(byte[] b) {
 					ByteCache.this.write(b);
 				}
 				@Override
-				public void write(byte[] b, int off, int len) throws IOException {
+				public void write(byte[] b, int off, int len) {
 					ByteCache.this.write(b, off, len);
 				}
 			};

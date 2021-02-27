@@ -313,9 +313,9 @@ public enum HTTPStatusCode {
 	HTTP_511_NETWORK_AUTHENTICATION_REQUIRED(511, "Network Authentication Required"),
 	
 	;
-	private String message;
-	private int code;
-	private HTTPStatusCode(int code, String message) {
+	private final String message;
+	private final int code;
+	HTTPStatusCode(int code, String message) {
 		this.code = code;
 		this.message = message;
 	}

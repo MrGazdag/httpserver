@@ -23,6 +23,7 @@ import me.mrgazdag.programs.httpserver.resource.TextResource;
 import me.mrgazdag.programs.httpserver.response.HTTPResponse;
 import me.mrgazdag.programs.httpserver.response.HTTPStatusCode;
 
+@SuppressWarnings("unused")
 public class HTTPManager {
 	public enum DefaultManagerLoggingLevel {
 		NOTHING, CONNECTIONS, EVERYTHING
@@ -48,6 +49,7 @@ public class HTTPManager {
 			log.println(string);
 		}
 	}
+	@SuppressWarnings("SameParameterValue")
 	private void logIF(DefaultManagerLoggingLevel level, Socket socket, String string) {
 		if (level.ordinal() <= loggingLevel.ordinal()) {
 			log.print(socket.getInetAddress().getHostAddress());
@@ -131,6 +133,7 @@ public class HTTPManager {
 			throw new InternalException(t);
 		}
 	}
+	@SuppressWarnings("RedundantThrows")
 	public void parseResource(String resource, HTTPRequestBuilder builder) throws BadRequestFormatException,InternalException {
 		String[] parts = resource.split("\\?",2);
 		builder.resource(parts[0]);

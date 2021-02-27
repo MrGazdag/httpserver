@@ -17,13 +17,13 @@ import me.mrgazdag.programs.httpserver.ByteCache;
  */
 public class TextResource extends CachedResource {
 
-	private Supplier<String> text;
-	private Charset charset;
-	private String mime;
+	private final Supplier<String> text;
+	private final Charset charset;
+	private final String mime;
 	public TextResource(File file, Charset charset, String mime) {
 		super();
 		this.text = () -> {
-			StringBuffer sb = new StringBuffer();
+			StringBuilder sb = new StringBuilder();
 			try {
 				Path path = file.toPath();
 				BufferedReader br = charset == null ? Files.newBufferedReader(path) : Files.newBufferedReader(path, charset);
@@ -66,6 +66,7 @@ public class TextResource extends CachedResource {
 		this.charset = charset;
 		this.mime = mime;
 	}
+	@SuppressWarnings("unused")
 	public TextResource(String text, Charset charset, String mime, boolean cacheEnabled) {
 		super(cacheEnabled);
 		this.text = () -> text;
@@ -78,13 +79,15 @@ public class TextResource extends CachedResource {
 		return (mime == null ? MIMEType.TEXT_PLAIN.getFullString() : mime) + (charset != null ? "; charset=" + charset : "");
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	protected boolean isCacheValid() {
 		return true;
 	}
 
+	@SuppressWarnings("unused")
 	@Override
-	public void writeCache(ByteCache cache) throws IOException {
+	public void writeCache(ByteCache cache) {
 		cache.write(text.get().getBytes(charset));
 	}
 

@@ -13,6 +13,7 @@ import me.mrgazdag.programs.httpserver.ByteCache;
  * @author Andris
  *
  */
+@SuppressWarnings("unused")
 public abstract class CachedResource implements HTTPResource {
 	protected ByteCache cache;
 	private boolean cached;
@@ -42,12 +43,14 @@ public abstract class CachedResource implements HTTPResource {
 	 * Should check for validity of the cache.
 	 * @return if the cache is valid or not
 	 */
+	@SuppressWarnings("SameReturnValue")
 	protected abstract boolean isCacheValid();
 	/**
 	 * Implementations should write the cache no matter what.
 	 * @param cache the cache to write in
 	 */
 	public abstract void writeCache(ByteCache cache) throws IOException;
+	@SuppressWarnings("CommentedOutCode")
 	@Override
 	public void write(OutputStream stream) throws IOException {
 		if (!cacheEnabled || !cached || !isCacheValid()) {

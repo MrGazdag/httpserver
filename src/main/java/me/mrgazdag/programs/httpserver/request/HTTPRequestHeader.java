@@ -44,8 +44,8 @@ public enum HTTPRequestHeader {
 	WARNING("Warning")
 	;
 	
-	private String key;
-	private HTTPRequestHeader(String key) {
+	private final String key;
+	HTTPRequestHeader(String key) {
 		this.key = key;
 	}
 	public String getKey() {

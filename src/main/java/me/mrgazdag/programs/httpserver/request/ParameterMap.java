@@ -1,33 +1,29 @@
 package me.mrgazdag.programs.httpserver.request;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@SuppressWarnings("unused")
 public class ParameterMap {
 	private static Map<String, List<String>> map;
 	public ParameterMap() {
-		map = new HashMap<String,List<String>>();
+		map = new HashMap<>();
 	}
 	public ParameterMap(String query) {
 		this();
 		parse(query);
 	}
 	public void parse(String query) {
-		String[] parts = query.split("\\&");
+		String[] parts = query.split("&");
         for (String string : parts) {
-        	String[] split = string.split("\\=");
+        	String[] split = string.split("=");
         	String key = split[0];
         	List<String> list;
         	if (map.containsKey(key)) list = map.get(key);
         	else {
-        		list = new ArrayList<String>();
+        		list = new ArrayList<>();
         		map.put(key, list);
         	}
-        	for (String element : split[1].split(",")) {
-				list.add(element);
-			}
+			list.addAll(Arrays.asList(split[1].split(",")));
 		}
 	}
 	void add(String key, Object value) {
@@ -37,7 +33,7 @@ public class ParameterMap {
 		List<String> list;
     	if (map.containsKey(key)) list = map.get(key);
     	else {
-    		list = new ArrayList<String>();
+    		list = new ArrayList<>();
     		map.put(key, list);
     	}
 		list.add(value);
@@ -46,12 +42,10 @@ public class ParameterMap {
 		List<String> list;
     	if (map.containsKey(key)) list = map.get(key);
     	else {
-    		list = new ArrayList<String>();
+    		list = new ArrayList<>();
     		map.put(key, list);
     	}
-    	for (String value : values) {
-    		list.add(value);
-		}
+		list.addAll(Arrays.asList(values));
 	}
 	public String getString(String key) {
 		if (!map.containsKey(key)) return null;
@@ -81,7 +75,7 @@ public class ParameterMap {
 	public List<Integer> getIntList(String key) {
 		if (!map.containsKey(key)) return null;
 		try {
-			List<Integer> result = new ArrayList<Integer>();
+			List<Integer> result = new ArrayList<>();
 			for (String string : map.get(key)) {
 				result.add(Integer.parseInt(string));
 			}
@@ -110,7 +104,7 @@ public class ParameterMap {
 	public List<Long> getLongList(String key) {
 		if (!map.containsKey(key)) return null;
 		try {
-			List<Long> result = new ArrayList<Long>();
+			List<Long> result = new ArrayList<>();
 			for (String string : map.get(key)) {
 				result.add(Long.parseLong(string));
 			}

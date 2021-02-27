@@ -1,6 +1,5 @@
 package me.mrgazdag.programs.httpserver.resource;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import me.mrgazdag.programs.httpserver.ByteCache;
@@ -11,9 +10,10 @@ import org.json.JSONObject;
  * @author Andris
  *
  */
+@SuppressWarnings("unused")
 public class JSONResource extends CachedResource {
 
-	private JSONObject object;
+	private final JSONObject object;
 	private byte[] bytes;
 	public JSONResource(JSONObject obj) {
 		super();
@@ -33,7 +33,7 @@ public class JSONResource extends CachedResource {
 		return true;
 	}
 	@Override
-	public void writeCache(ByteCache cache) throws IOException {
+	public void writeCache(ByteCache cache) {
 		cache.write(getText());
 	}
 	private byte[] getText() {

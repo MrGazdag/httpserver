@@ -7,5 +7,6 @@ import me.mrgazdag.programs.httpserver.response.HTTPResponse;
 
 @FunctionalInterface
 public interface HTTPHandler {
+	@SuppressWarnings("unused")
 	public HTTPResponse handle(HTTPRequest request) throws BadRequestException;
 }

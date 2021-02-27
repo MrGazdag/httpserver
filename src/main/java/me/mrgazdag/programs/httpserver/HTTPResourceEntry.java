@@ -6,8 +6,8 @@ import me.mrgazdag.programs.httpserver.handler.HTTPHandler;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest;
 
 public class HTTPResourceEntry {
-	private Predicate<HTTPRequest> filter;
-	private HTTPHandler handler;
+	private final Predicate<HTTPRequest> filter;
+	private final HTTPHandler handler;
 	public HTTPResourceEntry(Predicate<HTTPRequest> filter, HTTPHandler handler) {
 		this.filter = filter;
 		this.handler = handler;

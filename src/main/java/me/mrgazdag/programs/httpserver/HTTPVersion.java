@@ -7,8 +7,8 @@ public enum HTTPVersion {
 	VERSION_2_0("2.0"),
 	UNKNOWN("UNKNOWN");
 
-	private String s;
-	private HTTPVersion(String s) {
+	private final String s;
+	HTTPVersion(String s) {
 		this.s = "HTTP/" + s;
 	}
 	public String getMessage() {
