@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.HashSet;
 import java.util.function.Predicate;
 
@@ -29,6 +30,7 @@ public class HTTPServer {
 	private int counted;
 	private volatile HTTPManager manager;
 	private final int port;
+	private Thread serverThread;
 	@SuppressWarnings("unused")
 	private int count() {
 		return counted++;
@@ -55,55 +57,18 @@ public class HTTPServer {
 			//sun = HttpServer.create(new InetSocketAddress(port), 0);
 			socket = new ServerSocket(port);
 			counted = 0;
-			new Thread(() -> {
-				while (running) {
-					try {
-						//File folder = new File("D:\\Tworkspaces\\Programs\\!DISCORD - DiscordBeniSzarMusicBot\\target\\instance\\editor");
-						Socket s = socket.accept();
-						s.setTcpNoDelay(true);
-						s.setSoTimeout(5000);
-						//noinspection CommentedOutCode
-						new Thread(() -> {
-							try {
-								InputStream inStream = s.getInputStream();
-								OutputStream outStream = s.getOutputStream();
-								BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
-								BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
-								HTTPResponse response = manager.handle(s, in, out, inStream, outStream);
-								response.send(out, outStream);
-							} catch (IOException e) {
-								e.printStackTrace();
-							} finally {
-								try {
-									s.close();
-								} catch (IOException e) {
-									e.printStackTrace();
-								}
-							}
-							/*
-							PrintStream ps = null;
-							try {
-								File f = new File(folder, count()+".txt");
-								if (!f.exists()) f.createNewFile();
-								ps = new PrintStream(f);
-								handle(s, ps);
-							} catch (Throwable e) {
-								if (ps != null) e.printStackTrace(ps);
-								else e.printStackTrace();
-							} finally {
-								if (ps != null) {
-									ps.close();
-								}
-							}
-							*/
-						}).start();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					
-				}
-			}, "API Server Thread").start();
+			serverThread = new HTTPServerThread();
+			serverThread.start();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public void stop() {
+		running = false;
+		try {
+			socket.close();
+			serverThread.join();
+		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
@@ -187,5 +152,63 @@ public class HTTPServer {
 	public HashSet<HTTPResourceEntry> getHandlers() {
 		return handlers;
 	}
-	
+
+	public class HTTPServerThread extends Thread {
+		public HTTPServerThread() {
+			super("HTTP Server thread");
+		}
+
+		@Override
+		public void run() {
+			while (running) {
+				try {
+					//File folder = new File("D:\\Tworkspaces\\Programs\\!DISCORD - DiscordBeniSzarMusicBot\\target\\instance\\editor");
+					Socket s = socket.accept();
+					s.setTcpNoDelay(true);
+					s.setSoTimeout(5000);
+					//noinspection CommentedOutCode
+					new Thread(() -> {
+						try {
+							InputStream inStream = s.getInputStream();
+							OutputStream outStream = s.getOutputStream();
+							BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+							BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
+							HTTPResponse response = manager.handle(s, in, out, inStream, outStream);
+							response.send(out, outStream);
+						} catch (IOException e) {
+							e.printStackTrace();
+						} finally {
+							try {
+								s.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+								/*
+								PrintStream ps = null;
+								try {
+									File f = new File(folder, count()+".txt");
+									if (!f.exists()) f.createNewFile();
+									ps = new PrintStream(f);
+									handle(s, ps);
+								} catch (Throwable e) {
+									if (ps != null) e.printStackTrace(ps);
+									else e.printStackTrace();
+								} finally {
+									if (ps != null) {
+										ps.close();
+									}
+								}
+								*/
+					}).start();
+				} catch (Exception e) {
+					if (e instanceof SocketException && !running) {
+						break;
+					}
+					e.printStackTrace();
+				}
+
+			}
+		}
+	}
 }
