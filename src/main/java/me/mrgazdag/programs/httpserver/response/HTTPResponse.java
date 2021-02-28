@@ -22,6 +22,7 @@ public class HTTPResponse {
 	public HTTPResponse() {
 		headers = new HashMap<>();
 		code = HTTPStatusCode.HTTP_501_NOT_IMPLEMENTED;
+		version = HTTPVersion.VERSION_1_1;
 	}
 	public HTTPResponse(HTTPStatusCode code, HTTPVersion version) {
 		this();
