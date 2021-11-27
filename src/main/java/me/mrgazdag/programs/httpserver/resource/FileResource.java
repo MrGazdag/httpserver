@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import me.mrgazdag.programs.httpserver.ByteCache;
 
@@ -98,7 +99,7 @@ public class FileResource extends CachedResource {
 		
 	}
 	public static HTTPResource create(File f) {
-		return create(f, null);
+		return create(f, StandardCharsets.UTF_8);
 	}
 	public static HTTPResource create(File f, Charset charset) {
 		FileType type = getFileType(f);
