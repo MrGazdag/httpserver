@@ -102,7 +102,7 @@ public class HTTPManager {
 		return createSimple(HTTPStatusCode.HTTP_500_INTERNAL_SERVER_ERROR);
 	}
 	public HTTPResponse onBadRequest(HTTPRequest request, BadRequestException e) {
-		return createSimple(HTTPStatusCode.HTTP_404_NOT_FOUND);
+		return createSimple(HTTPStatusCode.HTTP_400_BAD_REQUEST);
 	}
 	public HTTPResponse onNotFound(HTTPRequest request) {
 		return createSimple(HTTPStatusCode.HTTP_404_NOT_FOUND);
