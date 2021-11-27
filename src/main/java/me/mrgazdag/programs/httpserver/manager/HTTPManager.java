@@ -1,12 +1,8 @@
 package me.mrgazdag.programs.httpserver.manager;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 import me.mrgazdag.programs.httpserver.BadRequestException;
@@ -138,7 +134,11 @@ public class HTTPManager {
 	@SuppressWarnings("RedundantThrows")
 	public void parseResource(String resource, HTTPRequestBuilder builder) throws BadRequestFormatException,InternalException {
 		String[] parts = resource.split("\\?",2);
-		builder.resource(parts[0]);
+		try {
+			builder.resource(URLDecoder.decode(parts[0], StandardCharsets.UTF_8.name()));
+		} catch (UnsupportedEncodingException ignored) {
+			builder.resource(parts[0]);
+		}
 		if (parts.length == 2) builder.parameters(parts[1]);
 	}
 	public void readHeaders(HTTPRequestBuilder builder, BufferedReader in) throws BadRequestFormatException,InternalException {
