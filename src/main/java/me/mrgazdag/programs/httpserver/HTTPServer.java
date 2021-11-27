@@ -12,6 +12,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import me.mrgazdag.programs.httpserver.handler.HTTPHandler;
@@ -26,7 +28,7 @@ import me.mrgazdag.programs.httpserver.response.HTTPResponse;
 public class HTTPServer {
 	private ServerSocket socket;
 	private volatile boolean running;
-	private final HashSet<HTTPResourceEntry> handlers;
+	private final Set<HTTPResourceEntry> handlers;
 	private int counted;
 	private volatile HTTPManager manager;
 	private final int port;
@@ -40,7 +42,7 @@ public class HTTPServer {
 	}
 	public HTTPServer(HTTPManager manager, int port) {
 		this.running = false;
-		this.handlers = new HashSet<>();
+		this.handlers = new LinkedHashSet<>();
 		this.manager = manager == null ? new HTTPManager(this) : manager.setServer(this);
 		this.port = port;
 	}
@@ -155,7 +157,7 @@ public class HTTPServer {
 		ps.println("Not found");
 		s.close();
 	}
-	public HashSet<HTTPResourceEntry> getHandlers() {
+	public Set<HTTPResourceEntry> getHandlers() {
 		return handlers;
 	}
 
