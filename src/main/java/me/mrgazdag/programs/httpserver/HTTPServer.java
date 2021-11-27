@@ -78,6 +78,12 @@ public class HTTPServer {
 		handlers.add(entry);
 		return entry;
 	}
+	@SuppressWarnings("UnusedReturnValue")
+	public <T extends Predicate<HTTPRequest> & HTTPHandler> HTTPResourceEntry addEntry(T handler) {
+		HTTPResourceEntry entry = new HTTPResourceEntry(handler, handler);
+		handlers.add(entry);
+		return entry;
+	}
 	public boolean removeEntry(HTTPResourceEntry entry) {
 		return handlers.remove(entry);
 	}
