@@ -82,7 +82,9 @@ public class HTTPManager {
 		for (HTTPResourceEntry handler : server.getHandlers()) {
 			if (handler.getFilter().test(request)) {
 				try {
-					return handler.getHandler().handle(request);
+					HTTPResponse response = handler.getHandler().handle(request);
+					if (response == null) continue;
+					return response;
 				} catch (BadRequestException e) {
 					return onBadRequest(request, e);
 				}
