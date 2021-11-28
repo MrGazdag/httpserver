@@ -14,14 +14,27 @@ import org.json.JSONObject;
 public class JSONResource extends CachedResource {
 
 	private final JSONObject object;
+	private final String stringData;
 	private byte[] bytes;
 	public JSONResource(JSONObject obj) {
 		super();
-		object = obj;
+		this.object = obj;
+		this.stringData = null;
+	}
+	public JSONResource(String stringData) {
+		super();
+		this.object = null;
+		this.stringData = stringData;
 	}
 	public JSONResource(JSONObject obj, boolean cacheEnabled) {
 		//super(cacheEnabled);
-		object = obj;
+		this.object = obj;
+		this.stringData = null;
+	}
+	public JSONResource(String stringData, boolean cacheEnabled) {
+		//super(cacheEnabled);
+		this.object = null;
+		this.stringData = stringData;
 	}
 
 	@Override
@@ -38,7 +51,8 @@ public class JSONResource extends CachedResource {
 	}
 	private byte[] getText() {
 		if (bytes == null) {
-			bytes = object.toString(0).getBytes(StandardCharsets.UTF_8);
+			//noinspection ConstantConditions
+			bytes = (object == null ? stringData : object.toString(0)).getBytes(StandardCharsets.UTF_8);
 		}
 		return bytes;
 	}
