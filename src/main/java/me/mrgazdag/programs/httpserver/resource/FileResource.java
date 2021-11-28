@@ -109,7 +109,7 @@ public class FileResource extends CachedResource {
 	}
 	public static HTTPResource create(File f, boolean cacheEnabled) {
 		FileType type = getFileType(f);
-		if (type.text) return new TextResource(f, null, type.mime, cacheEnabled);
+		if (type.text) return new TextResource(f, StandardCharsets.UTF_8, type.mime, cacheEnabled);
 		else return new FileResource(f, type, cacheEnabled);
 	}
 	public static HTTPResource create(File f, Charset charset, boolean cacheEnabled) {
