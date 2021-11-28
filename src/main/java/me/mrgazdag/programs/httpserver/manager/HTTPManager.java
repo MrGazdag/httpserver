@@ -73,7 +73,7 @@ public class HTTPManager {
 		} catch (InternalException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "INTENRAL ERROR");
 			e.getCause().printStackTrace();
-			return onInternalError(e.getCause());
+			return onInternalError(null, e.getCause());
 		}
 		for (HTTPResourceEntry handler : server.getHandlers()) {
 			if (handler.getFilter().test(request)) {
@@ -84,7 +84,7 @@ public class HTTPManager {
 				} catch (BadRequestException e) {
 					return onBadRequest(request, e);
 				} catch (Throwable e) {
-					return onInternalError(e);
+					return onInternalError(request, e);
 				}
 			}
 		}
@@ -96,7 +96,7 @@ public class HTTPManager {
 	public HTTPResponse onBadRequestFormat(Throwable source) {
 		return createSimple(HTTPStatusCode.HTTP_400_BAD_REQUEST);
 	}
-	public HTTPResponse onInternalError(Throwable source) {
+	public HTTPResponse onInternalError(HTTPRequest request, Throwable source) {
 		return createSimple(HTTPStatusCode.HTTP_500_INTERNAL_SERVER_ERROR);
 	}
 	public HTTPResponse onBadRequest(HTTPRequest request, BadRequestException e) {
