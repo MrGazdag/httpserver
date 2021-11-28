@@ -83,6 +83,8 @@ public class HTTPManager {
 					return response;
 				} catch (BadRequestException e) {
 					return onBadRequest(request, e);
+				} catch (Throwable e) {
+					return onInternalError(e);
 				}
 			}
 		}
