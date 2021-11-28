@@ -67,6 +67,7 @@ public class FileResource extends CachedResource {
 		HTML(MIMEType.TEXT_HTML, true, "html", "htm", "shtml", "shtm", "xhtml", "xht", "hta"),
 		CSS(MIMEType.TEXT_CSS, true, "css"),
 		PLAINTEXT(MIMEType.TEXT_PLAIN, true, "txt"),
+		SVG(MIMEType.IMAGE_SVG_XML, true, "svg"),
 		JAVASCRIPT(MIMEType.TEXT_JAVASCRIPT, true, "js", "jsm"),
 		JSON(MIMEType.APPLICATION_JSON, true, "json"),
 		ZIP(MIMEType.APPLICATION_ZIP, false, "zip"),
