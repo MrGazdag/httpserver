@@ -131,7 +131,7 @@ public class HTTPRequest {
 			return headersIgnoreCase.containsKey(ignoreCase(key));
 		}
 		public String getHeader(String key) {
-			return headersExact.get(key);
+			return headersIgnoreCase.get(key);
 		}
 		public String getHeader(HTTPRequestHeader header) {
 			return headersIgnoreCase.get(ignoreCase(header.getKey()));
