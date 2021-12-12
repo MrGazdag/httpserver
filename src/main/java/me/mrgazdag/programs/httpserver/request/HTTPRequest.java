@@ -5,6 +5,7 @@ import me.mrgazdag.programs.httpserver.HTTPVersion;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @SuppressWarnings("unused")
@@ -13,16 +14,18 @@ public class HTTPRequest {
 	private final String methodAsString;
 	private final String resource;
 	private final HTTPVersion version;
-	private final Map<String, String> headers;
+	private final Map<String, String> headersExact;
+	private final Map<String, String> headersIgnoreCase;
 	private final ParameterMap parameters;
 	private final ByteCache data;
 	
-	HTTPRequest(HTTPRequestMethod method, String methodAsString, String resource, HTTPVersion version, HashMap<String, String> headers, ParameterMap parameters, ByteCache data) {
+	HTTPRequest(HTTPRequestMethod method, String methodAsString, String resource, HTTPVersion version, HashMap<String, String> headersExact, Map<String, String> headersIgnoreCase, ParameterMap parameters, ByteCache data) {
 		this.method = method;
 		this.methodAsString = methodAsString;
 		this.resource = resource;
 		this.version = version;
-		this.headers = Collections.unmodifiableMap(headers);
+		this.headersExact = Collections.unmodifiableMap(headersExact);
+		this.headersIgnoreCase = Collections.unmodifiableMap(headersIgnoreCase);
 		this.parameters = parameters;
 		this.data = data;
 	}
@@ -38,23 +41,32 @@ public class HTTPRequest {
 	public HTTPVersion getHTTPVersion() {
 		return version;
 	}
+	public Map<String, String> getHeadersExact() {
+		return headersExact;
+	}
 	public Map<String, String> getHeaders() {
-		return headers;
+		return headersIgnoreCase;
 	}
 	public ParameterMap getParameters() {
 		return parameters;
 	}
+	public String getHeaderExact(String key) {
+		return headersExact.get(key);
+	}
 	public String getHeader(String key) {
-		return headers.get(key);
+		return headersIgnoreCase.get(ignoreCase(key));
 	}
 	public String getHeader(HTTPRequestHeader header) {
-		return headers.get(header.getKey());
+		return headersIgnoreCase.get(ignoreCase(header.getKey()));
+	}
+	public boolean hasHeaderExact(String key) {
+		return headersExact.containsKey(key);
 	}
 	public boolean hasHeader(String key) {
-		return headers.containsKey(key);
+		return headersIgnoreCase.containsKey(ignoreCase(key));
 	}
 	public boolean hasHeader(HTTPRequestHeader header) {
-		return headers.containsKey(header.getKey());
+		return headersIgnoreCase.containsKey(ignoreCase(header.getKey()));
 	}
 	public ByteCache getData() {
 		return data;
@@ -67,14 +79,16 @@ public class HTTPRequest {
 		private String methodAsString;
 		private String resource;
 		private HTTPVersion version;
-		private final HashMap<String,String> headers;
+		private final HashMap<String,String> headersExact;
+		private final HashMap<String,String> headersIgnoreCase;
 		private final ParameterMap parameters;
 		private ByteCache data;
 		public HTTPRequestBuilder() {
 			method = HTTPRequestMethod.UNKNOWN;
 			resource = "/";
 			version = HTTPVersion.UNKNOWN;
-			headers = new HashMap<>();
+			headersExact = new HashMap<>();
+			headersIgnoreCase = new HashMap<>();
 			parameters = new ParameterMap();
 		}
 		public HTTPRequestBuilder method(HTTPRequestMethod method, String methodAsString) {
@@ -99,27 +113,34 @@ public class HTTPRequest {
 			return this;
 		}
 		public HTTPRequestBuilder header(String key, String value) {
-			this.headers.put(key, value);
+			this.headersExact.put(key, value);
+			this.headersIgnoreCase.put(ignoreCase(key), value);
 			return this;
 		}
 		public HTTPRequestBuilder data(ByteCache data) {
 			this.data = data;
 			return this;
 		}
-		public boolean hasHeader(String key) {
-			return headers.containsKey(key);
+		public boolean hasHeaderExact(String key) {
+			return headersExact.containsKey(key);
 		}
 		public boolean hasHeader(HTTPRequestHeader header) {
-			return headers.containsKey(header.getKey());
+			return headersIgnoreCase.containsKey(ignoreCase(header.getKey()));
+		}
+		public boolean hasHeader(String key) {
+			return headersIgnoreCase.containsKey(ignoreCase(key));
 		}
 		public String getHeader(String key) {
-			return headers.get(key);
+			return headersExact.get(key);
 		}
 		public String getHeader(HTTPRequestHeader header) {
-			return headers.get(header.getKey());
+			return headersIgnoreCase.get(ignoreCase(header.getKey()));
 		}
 		public HTTPRequest build() {
-			return new HTTPRequest(method,methodAsString,resource,version,headers,parameters, data);
+			return new HTTPRequest(method,methodAsString,resource,version, headersExact,headersIgnoreCase, parameters, data);
 		}
+	}
+	private static String ignoreCase(String original) {
+		return original.toLowerCase(Locale.ROOT);
 	}
 }
