@@ -124,7 +124,7 @@ public class HTTPManager {
 			//ps.println("Path: \"" + path + "\"");
 			String versionString = firstLine.substring(methodString.length() + 1 + path.length() + 1);
 			//ps.println("Version: \"" + versionString + "\"");
-			builder.method(HTTPRequestMethod.of(methodString));
+			builder.method(HTTPRequestMethod.of(methodString), methodString);
 			parseResource(path, builder);//builder.resource(path);
 			builder.version(HTTPVersion.of(versionString));			
 		} catch (IOException e) {

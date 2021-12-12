@@ -108,7 +108,7 @@ public class HTTPServer {
 		ps.println("Path: \"" + path + "\"");
 		String versionString = firstLine.substring(methodString.length() + 1 + path.length() + 1);
 		ps.println("Version: \"" + versionString + "\"");
-		rb.method(HTTPRequestMethod.of(methodString));
+		rb.method(HTTPRequestMethod.of(methodString), methodString);
 		rb.resource(path);
 		rb.version(HTTPVersion.of(versionString));
 		while (in.ready()) {

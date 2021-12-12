@@ -1,23 +1,25 @@
 package me.mrgazdag.programs.httpserver.request;
 
+import me.mrgazdag.programs.httpserver.ByteCache;
+import me.mrgazdag.programs.httpserver.HTTPVersion;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import me.mrgazdag.programs.httpserver.ByteCache;
-import me.mrgazdag.programs.httpserver.HTTPVersion;
-
 @SuppressWarnings("unused")
 public class HTTPRequest {
 	private final HTTPRequestMethod method;
+	private final String methodAsString;
 	private final String resource;
 	private final HTTPVersion version;
 	private final Map<String, String> headers;
 	private final ParameterMap parameters;
 	private final ByteCache data;
 	
-	HTTPRequest(HTTPRequestMethod method, String resource, HTTPVersion version, HashMap<String, String> headers, ParameterMap parameters, ByteCache data) {
+	HTTPRequest(HTTPRequestMethod method, String methodAsString, String resource, HTTPVersion version, HashMap<String, String> headers, ParameterMap parameters, ByteCache data) {
 		this.method = method;
+		this.methodAsString = methodAsString;
 		this.resource = resource;
 		this.version = version;
 		this.headers = Collections.unmodifiableMap(headers);
@@ -26,6 +28,9 @@ public class HTTPRequest {
 	}
 	public HTTPRequestMethod getHTTPMethod() {
 		return method;
+	}
+	public String getHTTPMethodAsString() {
+		return methodAsString;
 	}
 	public String getRequestedResource() {
 		return resource;
@@ -59,6 +64,7 @@ public class HTTPRequest {
 	@SuppressWarnings("UnusedReturnValue")
 	public static class HTTPRequestBuilder {
 		private HTTPRequestMethod method;
+		private String methodAsString;
 		private String resource;
 		private HTTPVersion version;
 		private final HashMap<String,String> headers;
@@ -71,8 +77,9 @@ public class HTTPRequest {
 			headers = new HashMap<>();
 			parameters = new ParameterMap();
 		}
-		public HTTPRequestBuilder method(HTTPRequestMethod method) {
+		public HTTPRequestBuilder method(HTTPRequestMethod method, String methodAsString) {
 			this.method = method;
+			this.methodAsString = methodAsString;
 			return this;
 		}
 		public HTTPRequestBuilder resource(String resource) {
@@ -112,7 +119,7 @@ public class HTTPRequest {
 			return headers.get(header.getKey());
 		}
 		public HTTPRequest build() {
-			return new HTTPRequest(method,resource,version,headers,parameters, data);
+			return new HTTPRequest(method,methodAsString,resource,version,headers,parameters, data);
 		}
 	}
 }
