@@ -15,15 +15,27 @@ public class ParameterMap {
 	public void parse(String query) {
 		String[] parts = query.split("&");
         for (String string : parts) {
-        	String[] split = string.split("=");
-        	String key = split[0];
-        	List<String> list;
+			String key;
+			String[] values;
+			if (string.contains("=")) {
+				String[] split = string.split("=");
+				key = split[0];
+				if (split.length == 1) {
+					values = new String[]{""};
+				} else {
+					values = split[1].split(",");
+				}
+			} else {
+				key = string;
+				values = new String[]{""};
+			}
+			List<String> list;
         	if (map.containsKey(key)) list = map.get(key);
         	else {
         		list = new ArrayList<>();
         		map.put(key, list);
         	}
-			list.addAll(Arrays.asList(split[1].split(",")));
+			list.addAll(Arrays.asList(values));
 		}
 	}
 	void add(String key, Object value) {
