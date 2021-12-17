@@ -1,5 +1,8 @@
 package me.mrgazdag.programs.httpserver.request;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @SuppressWarnings("unused")
@@ -24,6 +27,13 @@ public class ParameterMap {
 					values = new String[]{""};
 				} else {
 					values = split[1].split(",");
+					try {
+						for (int i = 0; i < values.length; i++) {
+							values[i] = URLDecoder.decode(values[i], StandardCharsets.UTF_8.name());
+						}
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
 				}
 			} else {
 				key = string;
