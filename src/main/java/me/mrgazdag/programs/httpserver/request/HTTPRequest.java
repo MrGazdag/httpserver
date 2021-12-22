@@ -140,6 +140,16 @@ public class HTTPRequest {
 			return new HTTPRequest(method,methodAsString,resource,version, headersExact,headersIgnoreCase, parameters, data);
 		}
 	}
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		String nl = System.lineSeparator();
+		sb.append(methodAsString).append(" ").append(resource).append(" ").append(version).append(nl);
+		for (Map.Entry<String, String> entry : headersExact.entrySet()) {
+			sb.append(entry.getKey()).append(": ").append(entry.getValue()).append(nl);
+		}
+		return sb.toString();
+	}
 	private static String ignoreCase(String original) {
 		return original.toLowerCase(Locale.ROOT);
 	}
