@@ -1,23 +1,18 @@
 package me.mrgazdag.programs.httpserver.manager;
 
-import java.io.*;
-import java.net.Socket;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-
-import me.mrgazdag.programs.httpserver.BadRequestException;
-import me.mrgazdag.programs.httpserver.BadRequestFormatException;
-import me.mrgazdag.programs.httpserver.HTTPResourceEntry;
-import me.mrgazdag.programs.httpserver.HTTPServer;
-import me.mrgazdag.programs.httpserver.HTTPVersion;
-import me.mrgazdag.programs.httpserver.InternalException;
+import me.mrgazdag.programs.httpserver.*;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest;
-import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest.HTTPRequestBuilder;
+import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
 import me.mrgazdag.programs.httpserver.resource.MIMEType;
 import me.mrgazdag.programs.httpserver.resource.TextResource;
 import me.mrgazdag.programs.httpserver.response.HTTPResponse;
 import me.mrgazdag.programs.httpserver.response.HTTPStatusCode;
+
+import java.io.*;
+import java.net.Socket;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings("unused")
 public class HTTPManager {
@@ -62,33 +57,44 @@ public class HTTPManager {
 		this.log = log;
 		this.loggingLevel = level;
 	}
-	public HTTPResponse handle(Socket socket, BufferedReader in, BufferedWriter out, InputStream inStream, OutputStream outStream) {
-		HTTPRequest request;
+	public void handle(Socket socket, BufferedReader in, BufferedWriter out, InputStream inStream, OutputStream outStream) throws IOException {
+		HTTPRequest request = null;
+		HTTPResponse response = null;
 		try {
 			request = buildRequest(in);
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, request.getHTTPMethod().name() + " [" + request.getRequestedResource() + "]");
 		} catch (BadRequestFormatException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "BAD REQUEST FORMAT");
-			return onBadRequestFormat(e.getCause());
+			response = onBadRequestFormat(e.getCause());
 		} catch (InternalException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "INTENRAL ERROR");
 			e.getCause().printStackTrace();
-			return onInternalError(null, e.getCause());
+			response = onInternalError(null, e.getCause());
 		}
-		for (HTTPResourceEntry handler : server.getHandlers()) {
-			if (handler.getFilter().test(request)) {
-				try {
-					HTTPResponse response = handler.getHandler().handle(request);
-					if (response == null) continue;
-					return response;
-				} catch (BadRequestException e) {
-					return onBadRequest(request, e);
-				} catch (Throwable e) {
-					return onInternalError(request, e);
+		try {
+			handlers: if (response == null) {
+				for (HTTPResourceEntry handler : server.getHandlers()) {
+					if (handler.getFilter().test(request)) {
+						try {
+							response = handler.getHandler().handle(request);
+							if (response != null) break handlers;
+						} catch (BadRequestException e) {
+							response = onBadRequest(request, e);
+							break handlers;
+						} catch (Throwable e) {
+							response = onInternalError(request, e);
+							break handlers;
+						}
+					}
 				}
+				response = onNotFound(request);
 			}
+		    response.send(out, outStream);
+		} catch (Throwable t) {
+			System.out.println(request.toString());
+		    t.printStackTrace();
+			throw t;
 		}
-		return onNotFound(request);
 	}
 	protected HTTPResponse createSimple(HTTPStatusCode code) {
 		return new HTTPResponse(HTTPStatusCode.HTTP_200_OK, HTTPVersion.VERSION_1_1).resource(new TextResource(code.getCode() + " " + code.getMessage(), StandardCharsets.UTF_8, MIMEType.TEXT_PLAIN.getFullString()));
@@ -109,8 +115,26 @@ public class HTTPManager {
 		HTTPRequestBuilder builder = new HTTPRequestBuilder();
 		readFirstInputLine(builder, in);
 		readHeaders(builder, in);
+		readData(builder, in);
 		return builder.build();
 	}
+
+	public void readData(HTTPRequestBuilder builder, BufferedReader in) throws InternalException {
+		//TODO read data when BufferedReader has been dropped
+		if (builder.hasHeader("Content-Length") && Integer.parseInt(builder.getHeader("Content-Length")) > 0) {
+			try {
+				ByteCache cache = new ByteCache();
+				while (in.ready()) {
+					String str = in.readLine();
+					cache.write(str.getBytes(StandardCharsets.UTF_8));
+				}
+				builder.data(cache);
+			} catch (Throwable t) {
+				throw new InternalException(t);
+			}
+		}
+	}
+
 	public void readFirstInputLine(HTTPRequestBuilder builder, BufferedReader in) throws BadRequestFormatException,InternalException {
 		try {
 			String firstLine = in.readLine();

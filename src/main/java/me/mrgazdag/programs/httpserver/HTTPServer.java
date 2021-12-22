@@ -210,8 +210,7 @@ public class HTTPServer {
 							OutputStream outStream = s.getOutputStream();
 							BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
 							BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
-							HTTPResponse response = manager.handle(s, in, out, inStream, outStream);
-							response.send(out, outStream);
+							manager.handle(s, in, out, inStream, outStream);
 						} catch (IOException e) {
 							e.printStackTrace();
 						} finally {
