@@ -65,6 +65,7 @@ public class HTTPManager {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, request.getHTTPMethod().name() + " [" + request.getRequestedResource() + "]");
 		} catch (BadRequestFormatException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "BAD REQUEST FORMAT");
+			e.printStackTrace();
 			response = onBadRequestFormat(e.getCause());
 		} catch (InternalException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "INTENRAL ERROR");
