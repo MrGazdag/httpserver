@@ -1,31 +1,30 @@
 package me.mrgazdag.programs.httpserver;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
+import me.mrgazdag.programs.httpserver.handler.HTTPHandler;
+import me.mrgazdag.programs.httpserver.manager.HTTPManager;
+import me.mrgazdag.programs.httpserver.request.HTTPRequest;
+import me.mrgazdag.programs.httpserver.request.HTTPRequest.HTTPRequestBuilder;
+import me.mrgazdag.programs.httpserver.request.HTTPRequestHeader;
+import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
+import me.mrgazdag.programs.httpserver.response.HTTPResponse;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.HashSet;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import me.mrgazdag.programs.httpserver.handler.HTTPHandler;
-import me.mrgazdag.programs.httpserver.manager.HTTPManager;
-import me.mrgazdag.programs.httpserver.request.HTTPRequest;
-import me.mrgazdag.programs.httpserver.request.HTTPRequestHeader;
-import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
-import me.mrgazdag.programs.httpserver.request.HTTPRequest.HTTPRequestBuilder;
-import me.mrgazdag.programs.httpserver.response.HTTPResponse;
-
 @SuppressWarnings("unused")
 public class HTTPServer {
+	private File keystorePath;
+	private char[] keystorePass;
 	private ServerSocket socket;
 	private volatile boolean running;
 	private final Set<HTTPResourceEntry> handlers;
@@ -49,6 +48,12 @@ public class HTTPServer {
 	public HTTPManager getManager() {
 		return manager;
 	}
+
+	public void enableHTTPS(File keystorePath, char[] keystorePass) {
+		this.keystorePath = keystorePath;
+		this.keystorePass = keystorePass;
+	}
+
 	public void setManager(HTTPManager manager) {
 		this.manager = manager;
 	}
@@ -57,13 +62,37 @@ public class HTTPServer {
 		try {
 			//TODO convert to sun
 			//sun = HttpServer.create(new InetSocketAddress(port), 0);
-			socket = new ServerSocket(port);
+			socket = createSocket(port);
 			counted = 0;
 			serverThread = new HTTPServerThread();
 			serverThread.start();
-		} catch (IOException e) {
+		} catch (KeyStoreException | IOException | CertificateException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyManagementException e) {
 			e.printStackTrace();
 		}
+	}
+	private ServerSocket createSocket(int port) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
+		if (keystorePath == null || keystorePass == null) return new ServerSocket(port);
+
+		char[] keyStorePassword = "pass_for_self_signed_cert".toCharArray();
+
+		KeyStore keyStore = KeyStore.getInstance("JKS");
+		keyStore.load(new FileInputStream(keystorePath), keystorePass);
+
+		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+		keyManagerFactory.init(keyStore, keystorePass);
+
+		SSLContext sslContext = SSLContext.getInstance("TLS");
+
+		// We don't need the password anymore → Overwrite it
+		Arrays.fill(keyStorePassword, '0');
+
+		// Null means using default implementations for TrustManager and SecureRandom
+		sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+
+		// Bind the socket to the given port and address
+		return sslContext
+				.getServerSocketFactory()
+				.createServerSocket(port, 0/* backlog*/);
 	}
 	public void stop() {
 		running = false;
