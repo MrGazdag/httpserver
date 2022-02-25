@@ -81,7 +81,7 @@ public class HTTPServer {
 		KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
 		keyManagerFactory.init(keyStore, keystorePass);
 
-		SSLContext sslContext = SSLContext.getInstance("TLS");
+		SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
 
 		// We don't need the password anymore → Overwrite it
 		Arrays.fill(keyStorePassword, '0');
