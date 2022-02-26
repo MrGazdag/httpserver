@@ -3,7 +3,9 @@ package me.mrgazdag.programs.httpserver.manager;
 import me.mrgazdag.programs.httpserver.*;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest;
 import me.mrgazdag.programs.httpserver.request.HTTPRequest.HTTPRequestBuilder;
+import me.mrgazdag.programs.httpserver.request.HTTPRequestHeader;
 import me.mrgazdag.programs.httpserver.request.HTTPRequestMethod;
+import me.mrgazdag.programs.httpserver.resource.FileResource;
 import me.mrgazdag.programs.httpserver.resource.MIMEType;
 import me.mrgazdag.programs.httpserver.resource.TextResource;
 import me.mrgazdag.programs.httpserver.response.HTTPResponse;
@@ -57,11 +59,11 @@ public class HTTPManager {
 		this.log = log;
 		this.loggingLevel = level;
 	}
-	public void handle(Socket socket, BufferedReader in, BufferedWriter out, InputStream inStream, OutputStream outStream) throws IOException {
+	public void handle(Socket socket, Reader in, BufferedWriter out, InputStream inStream, OutputStream outStream) throws IOException {
 		HTTPRequest request = null;
 		HTTPResponse response = null;
 		try {
-			request = buildRequest(in);
+			request = buildRequest(in, inStream);
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, request.getHTTPMethod().name() + " [" + request.getRequestedResource() + "]");
 		} catch (BadRequestFormatException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "BAD REQUEST FORMAT");
@@ -112,33 +114,78 @@ public class HTTPManager {
 	public HTTPResponse onNotFound(HTTPRequest request) {
 		return createSimple(HTTPStatusCode.HTTP_404_NOT_FOUND);
 	}
-	public HTTPRequest buildRequest(BufferedReader in) throws BadRequestFormatException,InternalException {
+	public HTTPRequest buildRequest(Reader in, InputStream inStream) throws BadRequestFormatException,InternalException {
 		HTTPRequestBuilder builder = new HTTPRequestBuilder();
-		readFirstInputLine(builder, in);
-		readHeaders(builder, in);
-		readData(builder, in);
+		readFirstInputLine(builder, in, inStream);
+		readHeaders(builder, in, inStream);
+		readData(builder, in, inStream);
 		return builder.build();
 	}
 
-	public void readData(HTTPRequestBuilder builder, BufferedReader in) throws InternalException {
+	public void readData(HTTPRequestBuilder builder, Reader in, InputStream inStream) throws InternalException {
 		//TODO read data when BufferedReader has been dropped
-		if (builder.hasHeader("Content-Length") && Integer.parseInt(builder.getHeader("Content-Length")) > 0) {
-			try {
-				ByteCache cache = new ByteCache();
-				while (in.ready()) {
-					String str = in.readLine();
-					cache.write(str.getBytes(StandardCharsets.UTF_8));
+		if (builder.hasHeader("Content-Length")) {
+			int contentLength = Integer.parseInt(builder.getHeader("Content-Length"));
+			if (contentLength <= 0) return;
+			FileResource.FileType mime = FileResource.FileType.fromMIME(builder.getHeader(HTTPRequestHeader.CONTENT_TYPE));
+			if (mime == null || !mime.isText()) {
+				try {
+					//binary data
+					ByteCache cache = new ByteCache();
+					byte[] buf = new byte[4098];
+					int size = 0;
+					while (size < contentLength) {
+						int toRead = Math.min(buf.length, contentLength-size);
+						int actuallyRead = inStream.read(buf, 0, toRead);
+						size+=actuallyRead;
+						cache.write(buf, 0, actuallyRead);
+					}
+					builder.data(cache);
+				} catch (Throwable t) {
+					throw new InternalException(t);
 				}
-				builder.data(cache);
-			} catch (Throwable t) {
-				throw new InternalException(t);
+			} else {
+				try {
+					//text data
+					ByteCache cache = new ByteCache();
+					char[] cbuf = new char[4098];
+					int size = 0;
+					while (size < contentLength) {
+						int toRead = Math.min(cbuf.length, contentLength-size);
+						int actuallyRead = in.read(cbuf, 0, toRead);
+						size+=actuallyRead;
+						cache.write(new String(cbuf, 0, actuallyRead).getBytes(StandardCharsets.UTF_8));
+					}
+					builder.data(cache);
+				} catch (Throwable t) {
+					throw new InternalException(t);
+				}
 			}
 		}
 	}
+	private static String readLine(Reader in, InputStream inStream) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		while (true) {
+			char c = (char) in.read();
+			if (c == '\r') {
+				inStream.mark(2);
+				char c2 = (char) in.read();
+				if (c2 != '\n') {
+					inStream.reset();
+				}
+				break;
+			} else if (c == '\n') {
+				break;
+			} else {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
+	}
 
-	public void readFirstInputLine(HTTPRequestBuilder builder, BufferedReader in) throws BadRequestFormatException,InternalException {
+	public void readFirstInputLine(HTTPRequestBuilder builder, Reader in, InputStream inStream) throws BadRequestFormatException,InternalException {
 		try {
-			String firstLine = in.readLine();
+			String firstLine = readLine(in, inStream);
 			if (firstLine == null) {
 				throw new BadRequestFormatException("Invalid first line");
 			}
@@ -168,10 +215,10 @@ public class HTTPManager {
 		}
 		if (parts.length == 2) builder.parameters(parts[1]);
 	}
-	public void readHeaders(HTTPRequestBuilder builder, BufferedReader in) throws BadRequestFormatException,InternalException {
+	public void readHeaders(HTTPRequestBuilder builder, Reader in, InputStream inStream) throws BadRequestFormatException,InternalException {
 		try {
 			while (in.ready()) {
-				String line = in.readLine();
+				String line = readLine(in, inStream);
 				if (line.equals("")) break;
 				//ps.println(String.valueOf(line));
 				String[] parts = line.split(": ", 2);

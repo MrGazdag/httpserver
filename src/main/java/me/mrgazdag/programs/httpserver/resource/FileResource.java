@@ -85,6 +85,25 @@ public class FileResource extends CachedResource {
 		FileType(MIMEType mime, boolean text, String... extensions) {
 			this(mime.getFullString(), text, extensions);
 		}
+
+		public String getMime() {
+			return mime;
+		}
+
+		public boolean isText() {
+			return text;
+		}
+
+		public String[] getExtensions() {
+			return extensions;
+		}
+
+		public static FileType fromMIME(String mime) {
+			for (FileType value : values()) {
+				if (mime.startsWith(value.mime)) return value;
+			}
+			return null;
+		}
 	}
 	public static FileType getFileType(File f) {
 		String[] parts = f.getName().split("\\.");

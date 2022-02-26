@@ -206,9 +206,9 @@ public class HTTPServer {
 					//noinspection CommentedOutCode
 					new Thread(() -> {
 						try {
-							InputStream inStream = s.getInputStream();
+							InputStream inStream = new BufferedInputStream(s.getInputStream());
 							OutputStream outStream = s.getOutputStream();
-							BufferedReader in = new BufferedReader(new InputStreamReader(inStream));
+							Reader in = new InputStreamReader(inStream);
 							BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
 							manager.handle(s, in, out, inStream, outStream);
 						} catch (IOException e) {

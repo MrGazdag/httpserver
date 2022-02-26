@@ -66,7 +66,15 @@ public enum MIMEType {
 		this.parameter = parameter;
 		this.full = type + "/" + subtype + (parameter != null ? ";" + parameter : "");
 	}
-	public String getType() {
+
+    public static MIMEType from(String header) {
+		for (MIMEType value : values()) {
+			if (header.startsWith(value.full)) return value;
+		}
+		return null;
+    }
+
+    public String getType() {
 		return type;
 	}
 	public String getSubtype() {
