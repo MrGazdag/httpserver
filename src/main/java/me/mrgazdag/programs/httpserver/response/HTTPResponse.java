@@ -66,7 +66,7 @@ public class HTTPResponse {
 		send(out,outStream);
 	}
 	public void send(BufferedWriter out, OutputStream outStream) throws IOException {
-		header(HTTPResponseHeader.CONTENT_LENGTH, ""+(resource == null ? 0 : resource.length()));
+		if (resource.length() > 0) header(HTTPResponseHeader.CONTENT_LENGTH, ""+(resource == null ? 0 : resource.length()));
 		out.write(version.getMessage());
 		out.write(" ");
 		out.write(code.getCode()+"");
