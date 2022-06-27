@@ -205,17 +205,18 @@ public class HTTPServer {
 					s.setSoTimeout(5000);
 					//noinspection CommentedOutCode
 					new Thread(() -> {
+						boolean completed = false;
 						try {
 							InputStream inStream = new BufferedInputStream(s.getInputStream());
 							OutputStream outStream = s.getOutputStream();
 							Reader in = new InputStreamReader(inStream);
 							BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
-							manager.handle(s, in, out, inStream, outStream);
+							completed = manager.handle(s, in, out, inStream, outStream);
 						} catch (IOException e) {
 							e.printStackTrace();
 						} finally {
 							try {
-								s.close();
+								if (completed) s.close();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}

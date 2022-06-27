@@ -60,13 +60,13 @@ public class HTTPResponse {
 	public HTTPVersion getVersion() {
 		return version;
 	}
-	public void send(Socket s) throws IOException {
+	public boolean send(Socket s) throws IOException {
 		OutputStream outStream = s.getOutputStream();
 		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(outStream));
-		send(out,outStream);
+		return send(out,outStream);
 	}
-	public void send(BufferedWriter out, OutputStream outStream) throws IOException {
-		if (resource.length() > 0) header(HTTPResponseHeader.CONTENT_LENGTH, ""+(resource == null ? 0 : resource.length()));
+	public boolean send(BufferedWriter out, OutputStream outStream) throws IOException {
+		if (resource != null && resource.length() > 0) header(HTTPResponseHeader.CONTENT_LENGTH, ""+(resource == null ? 0 : resource.length()));
 		out.write(version.getMessage());
 		out.write(" ");
 		out.write(code.getCode()+"");
@@ -82,5 +82,6 @@ public class HTTPResponse {
 		if (resource != null) {
 			resource.write(outStream);
 		}
+		return resource == null ||resource.length() > -1;
 	}
 }

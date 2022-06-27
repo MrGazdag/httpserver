@@ -59,7 +59,7 @@ public class HTTPManager {
 		this.log = log;
 		this.loggingLevel = level;
 	}
-	public void handle(Socket socket, Reader in, BufferedWriter out, InputStream inStream, OutputStream outStream) throws IOException {
+	public boolean handle(Socket socket, Reader in, BufferedWriter out, InputStream inStream, OutputStream outStream) throws IOException {
 		HTTPRequest request = null;
 		HTTPResponse response = null;
 		try {
@@ -92,7 +92,7 @@ public class HTTPManager {
 				}
 				response = onNotFound(request);
 			}
-		    response.send(out, outStream);
+		    return response.send(out, outStream);
 		} catch (Throwable t) {
 			System.out.println(request.toString());
 		    t.printStackTrace();
