@@ -71,7 +71,7 @@ public class HTTPManager {
 			response = onBadRequestFormat(e.getCause());
 		} catch (InternalException e) {
 			logIF(DefaultManagerLoggingLevel.CONNECTIONS, socket, "INTENRAL ERROR");
-			e.getCause().printStackTrace();
+			//e.getCause().printStackTrace();
 			response = onInternalError(null, e.getCause());
 		}
 		try {
